@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from decimal import Decimal
 from typing import Optional
 from datetime import datetime
@@ -13,8 +13,7 @@ class WalletBase(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WalletResponse(WalletBase):
@@ -48,10 +47,9 @@ class OperationRequest(BaseModel):
             raise ValueError("amount должен быть больше 0")
         return v
 
-    class Config:
-        json_schema_extra = {
-            "example": {"operation_type": "DEPOSIT", "amount": 1000.00}
-        }
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"operation_type": "DEPOSIT", "amount": 1000.00}}
+    )
 
 
 class OperationResponse(BaseModel):
@@ -63,8 +61,7 @@ class OperationResponse(BaseModel):
     new_balance: Decimal
     transaction_id: Optional[uuid.UUID] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TransactionResponse(BaseModel):
@@ -78,8 +75,7 @@ class TransactionResponse(BaseModel):
     new_balance: Decimal
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ErrorResponse(BaseModel):

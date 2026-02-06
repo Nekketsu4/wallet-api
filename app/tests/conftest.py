@@ -6,7 +6,7 @@ from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.database import Base, get_session
+from app.database import Base, get_async_db_session
 from app.main import app
 from app.config import settings
 
@@ -31,7 +31,7 @@ async def override_get_db() -> AsyncSession:
         yield session
 
 
-app.dependency_overrides[get_session] = override_get_db
+app.dependency_overrides[get_async_db_session] = override_get_db
 
 
 @pytest.fixture(scope="session")
@@ -53,7 +53,7 @@ async def setup_database():
 
 
 @pytest.fixture
-async def db_session() -> AsyncGenerator[AsyncSession | Any, Any]:
+async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """Фикстура для тестовой сессии БД"""
     async with TestingSessionLocal() as session:
         yield session

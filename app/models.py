@@ -1,7 +1,12 @@
+from datetime import datetime
+
 from sqlalchemy import Column, String, Numeric, DateTime, CheckConstraint, Index
+from sqlalchemy.orm import Mapped
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
+
+from sqlalchemy.testing.schema import mapped_column
 
 from app.database import Base
 
@@ -11,18 +16,24 @@ class Wallet(Base):
 
     __tablename__ = "wallets"
 
-    id = Column(
+    id: Mapped[str] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
         index=True,
         nullable=False,
     )
-    balance = Column(Numeric(precision=20, scale=2), nullable=False, default=0.00)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+    balance: Mapped[float] = mapped_column(
+        Numeric(precision=20, scale=2),
+        nullable=False,
+        default=0.00,
     )
-    updated_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
@@ -44,20 +55,38 @@ class Transaction(Base):
 
     __tablename__ = "transactions"
 
-    id = Column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False
+    id: Mapped[str] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        nullable=False,
     )
-    wallet_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    operation_type = Column(
+    wallet_id: Mapped[str] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=False,
+        index=True,
+    )
+    operation_type: Mapped[str] = mapped_column(
         String(10),
         CheckConstraint("operation_type IN ('DEPOSIT', 'WITHDRAW')"),
         nullable=False,
     )
-    amount = Column(Numeric(precision=20, scale=2), nullable=False)
-    previous_balance = Column(Numeric(precision=20, scale=2), nullable=False)
-    new_balance = Column(Numeric(precision=20, scale=2), nullable=False)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+    amount: Mapped[float] = mapped_column(
+        Numeric(precision=20, scale=2),
+        nullable=False,
+    )
+    previous_balance: Mapped[float] = mapped_column(
+        Numeric(precision=20, scale=2),
+        nullable=False,
+    )
+    new_balance: Mapped[float] = mapped_column(
+        Numeric(precision=20, scale=2),
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
     )
 
     # Индексы для быстрого поиска транзакций по кошельку

@@ -1,8 +1,18 @@
-from typing import AsyncGenerator, Any
+from typing import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    create_async_engine,
+    async_sessionmaker,
+    AsyncAttrs,
+)
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from app.config import settings
+
+
+class Base(AsyncAttrs, DeclarativeBase):
+    __abstract__ = True
+
 
 # Создание асинхронного движка базы данных
 engine = create_async_engine(
@@ -22,10 +32,8 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
 )
 
-Base = declarative_base()
 
-
-async def get_session() -> AsyncGenerator[AsyncSession | Any, Any]:
+async def get_async_db_session() -> AsyncGenerator[AsyncSession, None]:
     """Зависимость для получения сессии базы данных"""
     async with AsyncSessionLocal() as session:
         try:

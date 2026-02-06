@@ -4,7 +4,7 @@ from decimal import Decimal
 import uuid
 
 from app import crud, schemas
-from app.database import get_session
+from app.database import get_async_db_session
 from app.exceptions import InsufficientFundsError, WalletNotFoundError
 
 router = APIRouter(prefix="/wallets", tags=["wallets"])
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/wallets", tags=["wallets"])
     },
 )
 async def get_wallet_balance(
-    wallet_id: uuid.UUID, db: AsyncSession = Depends(get_session)
+    wallet_id: uuid.UUID, db: AsyncSession = Depends(get_async_db_session)
 ):
     """
     Получение текущего баланса кошелька по его UUID.
@@ -49,7 +49,7 @@ async def get_wallet_balance(
 async def perform_wallet_operation(
     wallet_id: uuid.UUID,
     operation_request: schemas.OperationRequest,
-    db: AsyncSession = Depends(get_session),
+    db: AsyncSession = Depends(get_async_db_session),
 ):
     """
     Выполнение операции пополнения (DEPOSIT) или списания (WITHDRAW) средств с кошелька.
@@ -93,7 +93,7 @@ async def perform_wallet_operation(
     summary="Создать новый кошелек",
     status_code=status.HTTP_201_CREATED,
 )
-async def create_wallet(db: AsyncSession = Depends(get_session)):
+async def create_wallet(db: AsyncSession = Depends(get_async_db_session)):
     """
     Создание нового кошелька с нулевым балансом.
     """

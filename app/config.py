@@ -16,7 +16,6 @@ class Settings(BaseSettings):
     # Настройки безопасности
     SECRET_KEY: str
     ALGORITHM: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int
 
     # Настройки приложения
     DEBUG: bool

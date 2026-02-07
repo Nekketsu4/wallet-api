@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 
 from sqlalchemy import Column, String, Numeric, DateTime, CheckConstraint, Index
 from sqlalchemy.orm import Mapped
@@ -23,7 +24,7 @@ class Wallet(Base):
         index=True,
         nullable=False,
     )
-    balance: Mapped[float] = mapped_column(
+    balance: Mapped[Decimal] = mapped_column(
         Numeric(precision=20, scale=2),
         nullable=False,
         default=0.00,
@@ -55,7 +56,7 @@ class Transaction(Base):
 
     __tablename__ = "transactions"
 
-    id: Mapped[str] = mapped_column(
+    id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
@@ -71,15 +72,15 @@ class Transaction(Base):
         CheckConstraint("operation_type IN ('DEPOSIT', 'WITHDRAW')"),
         nullable=False,
     )
-    amount: Mapped[float] = mapped_column(
+    amount: Mapped[Decimal] = mapped_column(
         Numeric(precision=20, scale=2),
         nullable=False,
     )
-    previous_balance: Mapped[float] = mapped_column(
+    previous_balance: Mapped[Decimal] = mapped_column(
         Numeric(precision=20, scale=2),
         nullable=False,
     )
-    new_balance: Mapped[float] = mapped_column(
+    new_balance: Mapped[Decimal] = mapped_column(
         Numeric(precision=20, scale=2),
         nullable=False,
     )

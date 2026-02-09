@@ -138,7 +138,7 @@ class TestWalletAPI:
             # Создаем 10 конкурентных запросов на пополнение
             amounts = [10.00] * 10
             tasks = [make_deposit(amount) for amount in amounts]
-            results = await asyncio.gather(*tasks)
+            await asyncio.gather(*tasks)
 
             # Все запросы должны были выполниться успешно
             # Финальный баланс должен быть 100.00 (10 * 10)
@@ -189,3 +189,54 @@ class TestWalletAPI:
             )
 
             assert response.status_code == 422  # Ошибка валидации
+
+    async def test_show_wallet_transactions(self, db_session):
+        """Тест получения истории операции кошелька"""
+        # Сначала создаем кошелек
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            create_response = await client.post("/api/v1/wallets/")
+            wallet_id = create_response.json()["id"]
+
+            # Пополняем на 400
+            resp_transaction_1 = await client.post(
+                f"/api/v1/wallets/{wallet_id}/operation",
+                json={"operation_type": "DEPOSIT", "amount": 400.00},
+            )
+
+            # Пополняем на 1300
+            resp_transaction_2 = await client.post(
+                f"/api/v1/wallets/{wallet_id}/operation",
+                json={"operation_type": "DEPOSIT", "amount": 1300.00},
+            )
+
+            # Списание 700
+            resp_transaction_3 = await client.post(
+                f"/api/v1/wallets/{wallet_id}/operation",
+                json={"operation_type": "WITHDRAW", "amount": 700.00},
+            )
+
+            # Получаем список истории транзакций кошелька
+            get_response = await client.get(
+                f"/api/v1/wallets/{wallet_id}/wallet_transactions"
+            )
+
+            assert get_response.status_code == 200
+            data = get_response.json()
+            data_transaction_1 = resp_transaction_1.json()
+            data_transaction_2 = resp_transaction_2.json()
+            data_transaction_3 = resp_transaction_3.json()
+            assert len(data) == 3
+
+            # Проверяем на уникальность id операций
+            assert [
+                data[0]["id"] == data_transaction_1["transaction_id"],
+                data[1]["id"] == data_transaction_2["transaction_id"],
+                data[2]["id"] == data_transaction_3["transaction_id"],
+            ]
+
+            # Проверяем что все операции одного кошелька, имеют единственный walled_id
+            assert [
+                data[0]["wallet_id"] == data_transaction_1["wallet_id"],
+                data[0]["wallet_id"] == data_transaction_2["wallet_id"],
+                data[0]["wallet_id"] == data_transaction_3["wallet_id"],
+            ]

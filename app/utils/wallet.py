@@ -4,7 +4,7 @@ from decimal import Decimal
 from loguru import logger
 
 from app.exceptions import InsufficientFundsError
-from app.schemas import OperationType
+from app.schemas.wallet import OperationType
 
 
 def calculate_new_balance(

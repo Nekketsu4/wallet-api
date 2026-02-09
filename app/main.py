@@ -1,34 +1,35 @@
 from contextlib import asynccontextmanager
+
+from loguru import logger
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from app.config import settings
-from app.database import engine
-from app.models import Base
-from app.endpoints.wallets import router as wallets_router
-import logging
 from sqlalchemy import text
 
-logger = logging.getLogger(__name__)
+from app.database import engine
+from app.endpoints.wallet import router as wallets_router
+from app.cache.cache_redis import init_redis, close_redis
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan контекст для управления состоянием приложения"""
-    # Создание таблиц при запуске (в продакшене лучше использовать миграции)
     try:
         async with engine.begin() as conn:
             await conn.execute(text("SELECT 1"))
-        logger.info("Database connection successful")
+        logger.success("Соединение с БД выполнено успешно")
+        logger.success("Запущена работа приложения")
+        await init_redis()
     except Exception as e:
-        logger.error(f"Database connection failed: {e}")
+        logger.error(f"Не удалось подключиться к БД: {e}")
         raise
 
     yield
-    # Завершение приложения
-    logger.info("Shutting down application...")
+    logger.info("Завершена работа приложения...")
+    await close_redis()
     await engine.dispose()
-    logger.info("Database connections closed")
+    logger.info("Соединение с БД закрыто")
+
 
 app = FastAPI(
     title="wallet API",
@@ -38,7 +39,6 @@ app = FastAPI(
 )
 
 
-# Настройка CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -47,7 +47,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Подключение роутеров
+
 app.include_router(wallets_router, prefix="/api/v1", tags=["wallets"])
 
 
@@ -65,4 +65,21 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Проверка здоровья приложения"""
+    health = {
+        "status": "healthy",
+        "redis": "connected" if await _check_redis() else "disconnected",
+    }
     return {"status": "healthy"}
+
+
+async def _check_redis() -> bool:
+    """Проверка доступности Redis"""
+    from app.cache import redis_client
+
+    if not redis_client:
+        return False
+    try:
+        await redis_client.ping()
+        return True
+    except:
+        return False

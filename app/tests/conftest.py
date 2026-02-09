@@ -1,20 +1,16 @@
 import pytest
 import asyncio
-from typing import AsyncGenerator, Any
+from typing import AsyncGenerator
 
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.pool import StaticPool
 
 from app.database import Base, get_async_db_session
 from app.main import app
 from app.config import settings
 
-# Тестовая база данных в памяти
-# TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
 test_engine = create_async_engine(
-    settings.get_db,
+    settings.TEST_DB_URL,
     # connect_args={"check_same_thread": False},
     poolclass=NullPool,
     echo=False,
@@ -48,8 +44,7 @@ async def setup_database():
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    await test_engine.dispose()
 
 
 @pytest.fixture

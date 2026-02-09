@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Column, String, Numeric, DateTime, CheckConstraint, Index
+from sqlalchemy import String, Numeric, DateTime, CheckConstraint, Index
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID

@@ -1,8 +1,9 @@
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+import uuid
+from datetime import datetime
 from decimal import Decimal
 from typing import Optional
-from datetime import datetime
-import uuid
+
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 class WalletBase(BaseModel):
@@ -60,20 +61,6 @@ class OperationResponse(BaseModel):
     wallet_id: uuid.UUID
     new_balance: Decimal
     transaction_id: Optional[uuid.UUID] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class TransactionResponse(BaseModel):
-    """Схема ответа для транзакции"""
-
-    id: uuid.UUID
-    wallet_id: uuid.UUID
-    operation_type: str
-    amount: Decimal
-    previous_balance: Decimal
-    new_balance: Decimal
-    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 

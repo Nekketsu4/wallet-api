@@ -4,18 +4,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from loguru import logger
 
-from app import schemas
+from app.schemas.transaction import TransactionResponse
+from app.schemas.wallet import (
+    WalletResponse,
+    ErrorResponse,
+    OperationResponse,
+    OperationRequest,
+)
 from app.database import get_async_db_session
 from app.models.wallet import Transaction
 from app.exceptions import InsufficientFundsError, WalletNotFoundError
 from app.services.wallet import WalletService
+from app.cache.cache_redis import cached, invalidate_cache
 
 router = APIRouter(prefix="/wallets", tags=["wallets"])
 
 
 @router.post(
     "/",
-    response_model=schemas.WalletResponse,
+    response_model=WalletResponse,
     summary="Создать новый кошелек",
     status_code=status.HTTP_201_CREATED,
 )
@@ -40,12 +47,16 @@ async def create_wallet(db: AsyncSession = Depends(get_async_db_session)):
 
 @router.get(
     "/{wallet_id}",
-    response_model=schemas.WalletResponse,
+    response_model=WalletResponse,
     summary="Получить баланс кошелька",
     responses={
-        404: {"model": schemas.ErrorResponse, "description": "Кошелек не найден"}
+        404: {
+            "model": ErrorResponse,
+            "description": "Кошелек не найден",
+        }
     },
 )
+@cached(ttl=60)  # Кэшируем на 1 минуту
 async def get_wallet_balance(
     wallet_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db_session),
@@ -68,12 +79,16 @@ async def get_wallet_balance(
 
 @router.get(
     "/{wallet_id}/wallet_transactions",
-    response_model=list[schemas.TransactionResponse],
+    response_model=list[TransactionResponse],
     summary="Показать историю операций",
     responses={
-        404: {"model": schemas.ErrorResponse, "description": "Кошелек не найден"},
+        404: {
+            "model": ErrorResponse,
+            "description": "Кошелек не найден",
+        },
     },
 )
+@cached(ttl=60)  # Кэшируем на 1 минуту
 async def show_wallet_transactions(
     wallet_id: uuid.UUID,
     skip: int = 0,
@@ -98,7 +113,7 @@ async def show_wallet_transactions(
         return {"message": f"У кошелька не было выполнено еще ни одной транзакций"}
 
     return [
-        schemas.TransactionResponse(
+        TransactionResponse(
             id=res.id,
             wallet_id=wallet_id,
             operation_type=res.operation_type,
@@ -113,18 +128,28 @@ async def show_wallet_transactions(
 
 @router.post(
     "/{wallet_id}/operation",
-    response_model=schemas.OperationResponse,
+    response_model=OperationResponse,
     summary="Выполнить операцию над кошельком",
     status_code=status.HTTP_200_OK,
     responses={
-        400: {"model": schemas.ErrorResponse, "description": "Неверный запрос"},
-        404: {"model": schemas.ErrorResponse, "description": "Кошелек не найден"},
-        422: {"model": schemas.ErrorResponse, "description": "Ошибка валидации"},
+        400: {
+            "model": ErrorResponse,
+            "description": "Неверный запрос",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Кошелек не найден",
+        },
+        422: {
+            "model": ErrorResponse,
+            "description": "Ошибка валидации",
+        },
     },
 )
+@invalidate_cache("cache:get_wallet_balance:*")  # Инвалидируем кэш при операциях
 async def perform_wallet_operation(
     wallet_id: uuid.UUID,
-    operation_request: schemas.OperationRequest,
+    operation_request: OperationRequest,
     db: AsyncSession = Depends(get_async_db_session),
 ):
     """
@@ -150,7 +175,7 @@ async def perform_wallet_operation(
             f"Кошелек: {wallet_id}, Транзакция: {transaction.id}, "
             f"Новый баланс: {wallet.balance}"
         )
-        return schemas.OperationResponse(
+        return OperationResponse(
             success=True,
             message=f"Операция {operation_request.operation_type} успешно выполнена",
             wallet_id=wallet_id,

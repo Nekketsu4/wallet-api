@@ -74,7 +74,7 @@ async def health_check():
 
 async def _check_redis() -> bool:
     """Проверка доступности Redis"""
-    from app.cache import redis_client
+    from app.cache.cache_redis import redis_client
 
     if not redis_client:
         return False

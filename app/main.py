@@ -69,7 +69,7 @@ async def health_check():
         "status": "healthy",
         "redis": "connected" if await _check_redis() else "disconnected",
     }
-    return {"status": "healthy"}
+    return {"status": health}
 
 
 async def _check_redis() -> bool:

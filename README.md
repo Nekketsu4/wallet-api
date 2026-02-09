@@ -30,13 +30,14 @@ python3 -m venv venv
 ```
 4. Активируем виртуальное окружение
 ```commandline
-source venv/bin activate для Linux
+source venv/bin/activate для Linux
 venv\Scripts\activate для Windows
 ```
 5. Подгружаем зависимости из requirements.txt
 ```commandline
 pip install -r requirements.txt
 ```
+6. Создайте файл .env в корневой папке приложения и укажите параметры следуя примеру файла .env_example
 ### Запуск приложения
 * Запуск БД, redis и сервиса кошелька
 ```commandline
@@ -54,14 +55,7 @@ sudo docker-compose -f docker-compose.yml up -d --build
 ```commandline
 sudo docker-compose -f docker-compose.yml logs 
 ```
-7. Применение миграций
-```commandline
-docker-compose exec app alembic upgrade head
-```
-* Откат миграции
-```commandline
-docker-compose exec app alembic downgrade
-```
+
 * Чтобы воспользоваться интерактивной документацией swagger перейдите по адресу
 http://0.0.0.0:8000/docs
 
@@ -70,6 +64,14 @@ http://0.0.0.0:8000/docs
 * Запуск тестовой БД и redis
 ```commandline
 sudo docker-compose -f docker-compose-test.yml up -d
+```
+* Делаем миграции чтобы тесты могли быть успешно запущены
+```commandline
+alembic upgrade head
+```
+* Можно также откатить миграции при необходимости
+```commandline
+alembic downgrade
 ```
 * Запуск тестов
 ```commandline

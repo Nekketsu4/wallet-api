@@ -15,6 +15,7 @@ sudo docker compose exec app pytest app/tests/ -v
 
 
 ### Установка и запуск
+в .env флаг DEBUG должен быть False
 1. Клонируем репозиторий
 ```commandline
 git clone https://github.com/Nekketsu4/wallet-api.git
@@ -65,6 +66,7 @@ docker-compose exec app alembic downgrade
 http://0.0.0.0:8000/docs
 
 ### Запуск тестов
+в .env флаг DEBUG должен быть True
 * Запуск тестовой БД и redis
 ```commandline
 sudo docker-compose -f docker-compose-test.yml up -d
